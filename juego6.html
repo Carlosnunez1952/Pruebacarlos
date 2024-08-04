@@ -1,0 +1,192 @@
+ 
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Memoria con Fotos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .card {
+            width: 80px;
+            height: 80px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+        }
+        .card-front {
+            background-color: #bbb;
+        }
+        .card-back {
+            background-color: #fff;
+            transform: rotateY(180deg);
+        }
+        .card-back img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .matched .card-inner {
+            transform: rotateY(180deg);
+        }
+        .matched .card-back {
+            background-color: #90EE90;
+        }
+        #reset-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #reset-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Juego de Memoria con Fotos</h1>
+        <p>Intentos: <span id="attempts">0</span></p>
+        <div id="game-board"></div>
+        <button id="reset-button">Reiniciar Juego</button>
+    </div>
+    <script>
+        const images = [
+            'https://i.postimg.cc/KYMmBvcb/zoom-7633d99ea9677004a4988e94e5d30aa0-920-518.jpg',
+            'https://i.postimg.cc/L8FFJSPx/1000047315.jpg',
+            'https://i.postimg.cc/BQr42Drc/31994.jpg',
+            'https://i.postimg.cc/pdxv6vXm/seguros-sura-5-preparaciones-saludables-con-frutas-mini.jpg',
+            'https://i.postimg.cc/ZqcmkQCV/oeb-V3-DGbxy-WZAEVX-2-1.jpg',
+            'https://i.postimg.cc/SsxhmG9q/k-Rw-Pm-Zee-ADb3-Ugl-Y-3-1.jpg',
+            'https://i.postimg.cc/MHcJQKtF/Photo-1715370617691.png',
+            'https://via.placeholder.com/80?text=8'
+        ];
+        const gameBoard = document.getElementById('game-board');
+        const attemptsElement = document.getElementById('attempts');
+        const resetButton = document.getElementById('reset-button');
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let attempts = 0;
+        let canFlip = true;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            cards = [...images, ...images];
+            shuffleArray(cards);
+            cards.forEach((img, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front"></div>
+                        <div class="card-back">
+                            <img src="${img}" alt="Card Image">
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => flipCard(card));
+                gameBoard.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+            if (!canFlip || flippedCards.length >= 2 || card.classList.contains('matched') || card.classList.contains('flipped')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                canFlip = false;
+                attempts++;
+                attemptsElement.textContent = attempts;
+                setTimeout(checkMatch, 500);
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const img1 = card1.querySelector('img').src;
+            const img2 = card2.querySelector('img').src;
+
+            if (img1 === img2) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                if (matchedPairs === images.length) {
+                    setTimeout(() => {
+                        alert(`¡Felicidades! Has completado el juego en ${attempts} intentos.`);
+                    }, 500);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                }, 1000);
+            }
+            flippedCards = [];
+            canFlip = true;
+        }
+
+        function resetGame() {
+            flippedCards = [];
+            matchedPairs = 0;
+            attempts = 0;
+            attemptsElement.textContent = attempts;
+            canFlip = true;
+            createBoard();
+        }
+
+        resetButton.addEventListener('click', resetGame);
+
+        // Iniciar el juego
+        createBoard();
+    </script>
+</body>
+</html>
